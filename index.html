@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monthly Daily Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#fdf8fc;--surface:#ffffff;--ink:#2b2340;--muted:#8a809e;--line:#eee5f3;--head:#f6ecf9;--today:#ffe9f1;
+  --shadow:0 10px 40px rgba(120,70,170,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#150f22;--surface:#1f1733;--ink:#f3ecff;--muted:#a597c2;--line:#32284d;--head:#281e42;--today:#3c1f3f;--shadow:0 10px 40px rgba(0,0,0,.4);}}
+:root[data-theme="dark"]{--bg:#150f22;--surface:#1f1733;--ink:#f3ecff;--muted:#a597c2;--line:#32284d;--head:#281e42;--today:#3c1f3f;--shadow:0 10px 40px rgba(0,0,0,.4);}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;padding:20px 14px 40px;
+  background-image:radial-gradient(circle at 10% 0%,rgba(255,143,177,.22),transparent 40%),radial-gradient(circle at 95% 5%,rgba(120,190,255,.22),transparent 38%),radial-gradient(circle at 60% 100%,rgba(190,150,255,.18),transparent 40%);
+  background-attachment:fixed}
+header{max-width:1200px;margin:0 auto 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(28px,5vw,44px);margin:0;letter-spacing:-.5px;
+  background:linear-gradient(90deg,#ff6b9d,#c77dff,#4cc9f0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:14px;margin-top:2px}
+.month{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:999px;padding:6px;box-shadow:var(--shadow)}
+.month button{border:0;background:var(--head);color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.month button:focus-visible,.cell:focus-visible,.name:focus-visible{outline:2px solid #c77dff;outline-offset:2px}
+.month span{font-family:'Fraunces',serif;font-size:18px;min-width:150px;text-align:center}
+.stats{max-width:1200px;margin:0 auto 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow)}
+.stat b{font-family:'Fraunces',serif;font-size:26px;display:block}
+.stat small{color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:9px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#ff6b9d,#c77dff,#4cc9f0);border-radius:9px;transition:width .3s}
+.wrap{max-width:1200px;margin:0 auto;background:var(--surface);border-radius:22px;box-shadow:var(--shadow);overflow-x:auto}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{padding:0;text-align:center}
+thead th{background:var(--head);position:sticky;top:0;z-index:2;font-size:11px;font-weight:600;color:var(--muted);height:50px;min-width:30px;border-bottom:2px solid var(--line)}
+thead th b{display:block;font-size:13px;color:var(--ink)}
+thead th.today{background:var(--today)}
+thead th.today b{color:#e0457b}
+.left{position:sticky;left:0;z-index:3;background:var(--surface);text-align:left;min-width:210px;max-width:210px}
+thead .left{background:var(--head);z-index:4;padding-left:14px;font-family:'Fraunces',serif;font-size:16px;color:var(--ink)}
+.row td{height:36px;border-bottom:1px solid var(--line)}
+.row .left{display:flex;align-items:center;gap:8px;padding:0 8px 0 10px;height:36px}
+.n{width:22px;font-size:12px;color:var(--muted);text-align:right;flex:none}
+.name{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px;padding:4px;border-radius:6px}
+.name::placeholder{color:var(--muted);opacity:.6}
+.pct{font-size:11px;font-weight:600;flex:none;width:32px;text-align:right}
+.cell{width:100%;height:36px;border:0;background:transparent;cursor:pointer;position:relative;padding:0}
+.cell::after{content:"";position:absolute;inset:8px;border-radius:50%;border:1.5px solid var(--line);transition:all .15s}
+.cell:hover::after{border-color:var(--c)}
+.cell.on::after{background:var(--c);border-color:var(--c);transform:scale(1.05)}
+.cell.on::before{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;z-index:1}
+td.today{background:var(--today)}
+tfoot td{height:44px;font-size:11px;font-weight:600;color:var(--muted);background:var(--head)}
+tfoot .left{background:var(--head);padding-left:14px;font-family:'Fraunces',serif;font-size:14px;color:var(--ink)}
+.foot{max-width:1200px;margin:12px auto 0;display:flex;justify-content:space-between;color:var(--muted);font-size:13px;flex-wrap:wrap;gap:8px}
+.foot button{border:0;background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow);font:inherit;font-size:13px}
+.warns{max-width:1200px;margin:0 auto 14px;display:grid;gap:8px}
+.warn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;font-size:14px;background:#fff4dc;color:#7a4b00;border-left:5px solid #f9a825}
+.warn.hot{background:#ffe3e8;color:#8c1d3a;border-left-color:#e0457b}
+.warn.ok{background:#e4f8ea;color:#1d6b3a;border-left-color:#3fbf6b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn{background:#3d3015;color:#ffd98a}:root:not([data-theme="light"]) .warn.hot{background:#47182a;color:#ffb3c6}:root:not([data-theme="light"]) .warn.ok{background:#16382a;color:#a6ecc0}}
+.pie{max-width:1200px;margin:0 auto 14px;background:var(--surface);border-radius:22px;box-shadow:var(--shadow);padding:18px;display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.pie h2{font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin:0 0 2px;flex-basis:100%}
+.pie svg{width:190px;height:190px;flex:none;margin:0 auto}
+.pie .lg{flex:1;min-width:220px;display:grid;gap:7px}
+.lg div{display:flex;align-items:center;gap:8px;font-size:14px}
+.lg i{width:12px;height:12px;border-radius:4px;flex:none}
+.lg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg b{font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-size:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%}
+.chip{border:0;background:var(--head);color:var(--ink);padding:7px 13px;border-radius:999px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip.on{background:linear-gradient(90deg,#ff6b9d,#c77dff);color:#fff;font-weight:600}
+.chip:focus-visible{outline:2px solid #c77dff;outline-offset:2px}
+.trend>*{flex-basis:100%}
+.bars{display:flex;align-items:flex-end;gap:2px;height:130px}
+.bar2{flex:1;height:100%;display:flex;align-items:flex-end;background:var(--head);border-radius:4px;min-width:2px}
+.bar2 i{display:block;width:100%;border-radius:4px;background:linear-gradient(180deg,#c77dff,#4cc9f0)}
+.axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.stat .bar+small{display:block;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Daily Tracker</h1><div class="sub">Tap a circle to tick off a task. Tap a task name to rename it.</div></div>
+  <div class="month"><button id="prev" aria-label="Previous month">‹</button><span id="mlabel"></span><button id="next" aria-label="Next month">›</button></div>
+</header>
+<div class="stats">
+  <div class="stat"><b id="sDone">0</b><small>ticks this month</small></div>
+  <div class="stat"><b id="sPct">0%</b><small>month completion</small><div class="bar"><i id="sBar" style="width:0"></i></div></div>
+  <div class="stat"><b id="sBest">–</b><small>best task</small></div>
+</div>
+<div class="stats" id="stats2"></div>
+<div class="warns" id="warns"></div>
+<div class="pie"><h2>Where your effort went</h2><div class="chips" id="chips"></div><svg viewBox="0 0 42 42" id="pieSvg" role="img" aria-label="Share of ticks per task"></svg><div class="lg" id="legend"></div></div>
+<div class="pie trend"><h2>Efficiency trend</h2><div class="bars" id="bars"></div><div class="axis" id="axis"></div><div class="empty" id="insight"></div></div>
+<div class="wrap"><table id="t"></table></div>
+<div class="foot"><span>Your ticks save in this browser, month by month.</span><button id="reset">Clear this month</button></div>
+
+<script>
+var ROWS=25, COLORS=['#ff6b9d','#ff9f68','#f9c74f','#7bd88f','#4cc9f0','#8d99ff','#c77dff'];
+var now=new Date(), cur=new Date(now.getFullYear(),now.getMonth(),1);
+var state={names:[],ticks:{}};
+var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function key(){return 'tracker:'+cur.getFullYear()+'-'+(cur.getMonth()+1)}
+function load(){
+  var s=null;try{s=JSON.parse(localStorage.getItem(key())||'null')}catch(e){}
+  var names=[];try{names=JSON.parse(localStorage.getItem('tracker:names')||'[]')}catch(e){}
+  state={names:names,ticks:(s&&s.ticks)||{}};
+  while(state.names.length<ROWS)state.names.push('');
+}
+function save(){try{localStorage.setItem(key(),JSON.stringify({ticks:state.ticks}));localStorage.setItem('tracker:names',JSON.stringify(state.names))}catch(e){}}
+function dim(){return new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate()}
+function isToday(d){return now.getFullYear()==cur.getFullYear()&&now.getMonth()==cur.getMonth()&&now.getDate()==d}
+function render(){
+  var D=dim(),W=['S','M','T','W','T','F','S'],h='<thead><tr><th class="left">To do</th>';
+  document.getElementById('mlabel').textContent=MN[cur.getMonth()]+' '+cur.getFullYear();
+  for(var d=1;d<=D;d++){var wd=new Date(cur.getFullYear(),cur.getMonth(),d).getDay();h+='<th class="'+(isToday(d)?'today':'')+'"><b>'+d+'</b>'+W[wd]+'</th>'}
+  h+='</tr></thead><tbody>';
+  for(var r=0;r<ROWS;r++){
+    var c=COLORS[r%COLORS.length];
+    h+='<tr class="row" style="--c:'+c+'"><td class="left"><span class="n">'+(r+1)+'</span><input class="name" data-r="'+r+'" placeholder="Add a task" maxlength="40" value="'+esc(state.names[r])+'" aria-label="Task '+(r+1)+'"><span class="pct" id="p'+r+'" style="color:'+c+'"></span></td>';
+    for(d=1;d<=D;d++){var on=state.ticks[r+'-'+d];h+='<td class="'+(isToday(d)?'today':'')+'"><button class="cell'+(on?' on':'')+'" data-r="'+r+'" data-d="'+d+'" aria-pressed="'+!!on+'" aria-label="Task '+(r+1)+', day '+d+'"></button></td>'}
+    h+='</tr>';
+  }
+  h+='</tbody><tfoot><tr><td class="left">Done each day</td>';
+  for(d=1;d<=D;d++)h+='<td id="f'+d+'"></td>';
+  h+='</tr></tfoot>';
+  document.getElementById('t').innerHTML=h;
+  stats();
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function stats(){
+  var D=dim(),total=0,best=-1,bestName='–',active=0;
+  for(var r=0;r<ROWS;r++){var n=0;for(var d=1;d<=D;d++)if(state.ticks[r+'-'+d])n++;total+=n;
+    var p=document.getElementById('p'+r);if(p)p.textContent=n?Math.round(n/D*100)+'%':'';
+    if(state.names[r])active++;
+    if(n>best&&n>0){best=n;bestName=state.names[r]||('Task '+(r+1))}}
+  for(d=1;d<=D;d++){var c=0;for(r=0;r<ROWS;r++)if(state.ticks[r+'-'+d])c++;var f=document.getElementById('f'+d);if(f)f.textContent=c||''}
+  var rowsN=Math.max(active,1),pct=Math.round(total/(rowsN*D)*100);
+  document.getElementById('sDone').textContent=total;
+  document.getElementById('sPct').textContent=Math.min(pct,100)+'%';
+  document.getElementById('sBar').style.width=Math.min(pct,100)+'%';
+  document.getElementById('sBest').textContent=bestName;
+  extras();
+}
+var RANGES=[['Today',1],['7 days',7],['15 days',15],['Month',30],['3 months',90],['6 months',180],['1 year',365],['2 years',730],['3 years',1095],['4 years',1460],['5 years',1825]];
+var rangeDays=30,DN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function fmt(dt){return dt.getDate()+' '+MN[dt.getMonth()].slice(0,3)+' '+dt.getFullYear()}
+function ticksFor(y,m,cache){var k=y+'-'+m;if(cache[k])return cache[k];var t={};
+  if(y==cur.getFullYear()&&m==cur.getMonth())t=state.ticks;
+  else{try{var s=JSON.parse(localStorage.getItem('tracker:'+y+'-'+(m+1))||'null');if(s&&s.ticks)t=s.ticks}catch(e){}}
+  cache[k]=t;return t}
+function history(N){var cache={},out=[],base=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  for(var i=N-1;i>=0;i--){var dt=new Date(base);dt.setDate(base.getDate()-i);
+    var t=ticksFor(dt.getFullYear(),dt.getMonth(),cache),rows=[];
+    for(var r=0;r<ROWS;r++)if(t[r+'-'+dt.getDate()])rows.push(r);
+    out.push({dt:dt,rows:rows})}
+  return out}
+function insights(H,S,total){
+  var named=0,r,i;for(r=0;r<ROWS;r++)if(state.names[r])named++;
+  var n=Math.max(named,1),L=H.length,tdy=H[L-1].rows.length;
+  var cs=0;i=L-1;if(!H[i].rows.length)i--;while(i>=0&&H[i].rows.length){cs++;i--}
+  var bs=0,run=0,all=0;H.forEach(function(x){all+=x.rows.length;if(x.rows.length){run++;if(run>bs)bs=run}else run=0});
+  var eff=Math.min(100,Math.round(total/(n*S.length)*100));
+  var lvl=Math.floor(all/100)+1,into=all%100;
+  var msg=tdy==0?'Start with one small win today.':(tdy<n/2?'Good start. Keep the momentum.':(tdy<n?'Over halfway there. Finish strong.':'Perfect day. Well done!'));
+  var lab=RANGES.filter(function(x){return x[1]==rangeDays})[0][0].toLowerCase();
+  document.getElementById('stats2').innerHTML=
+   '<div class="stat"><b>'+tdy+' / '+n+'</b><small>done today</small><div class="bar"><i style="width:'+Math.min(100,Math.round(tdy/n*100))+'%"></i></div><small>'+msg+'</small></div>'+
+   '<div class="stat"><b>\ud83d\udd25 '+cs+' day'+(cs==1?'':'s')+'</b><small>current streak</small><small>Best streak: '+bs+' day'+(bs==1?'':'s')+'</small></div>'+
+   '<div class="stat"><b>'+eff+'%</b><small>efficiency, '+lab+'</small><div class="bar"><i style="width:'+eff+'%"></i></div></div>'+
+   '<div class="stat"><b>\u2b50 Level '+lvl+'</b><small>'+all+' ticks in total</small><div class="bar"><i style="width:'+into+'%"></i></div></div>';
+  var ch='';RANGES.forEach(function(x){ch+='<button class="chip'+(x[1]==rangeDays?' on':'')+'" data-d="'+x[1]+'">'+x[0]+'</button>'});
+  document.getElementById('chips').innerHTML=ch;
+  var bk=S.length<=31?1:(S.length<=180?7:30),bars='';
+  for(var j=0;j<S.length;j+=bk){var part=S.slice(j,j+bk),t=0;part.forEach(function(x){t+=x.rows.length});
+    var p=Math.min(100,Math.round(t/(n*part.length)*100));
+    bars+='<div class="bar2" title="'+fmt(part[0].dt)+': '+p+'%"><i style="height:'+Math.max(p,2)+'%"></i></div>'}
+  document.getElementById('bars').innerHTML=bars;
+  document.getElementById('axis').innerHTML='<span>'+fmt(S[0].dt)+'</span><span>'+(bk==1?'per day':(bk==7?'per week':'per month'))+'</span><span>'+fmt(S[S.length-1].dt)+'</span>';
+  var wd=[0,0,0,0,0,0,0],wc=[0,0,0,0,0,0,0];S.forEach(function(x){var g=x.dt.getDay();wd[g]+=x.rows.length;wc[g]++});
+  var bi=-1,bv=0;for(i=0;i<7;i++)if(wc[i]&&wd[i]/wc[i]>bv){bv=wd[i]/wc[i];bi=i}
+  document.getElementById('insight').textContent=total?('Average '+(total/S.length).toFixed(1)+' ticks a day'+(bi>=0&&S.length>6?'. Your strongest day is '+DN[bi]+'.':'.')):'No ticks in this period yet. Tick a task to see your trend.';
+}
+document.getElementById('chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;rangeDays=+b.dataset.d;extras()});
+function extras(){
+  var D=dim(),counts=[],total=0,r,d,H=history(1825),L=H.length,st=0;
+  for(var i=0;i<L;i++)if(H[i].rows.length){st=i;break}
+  var S=H.slice(Math.max(L-rangeDays,st)),tc={};
+  S.forEach(function(x){x.rows.forEach(function(q){tc[q]=(tc[q]||0)+1})});
+  for(r=0;r<ROWS;r++)if(tc[r]){counts.push({r:r,n:tc[r]});total+=tc[r]}
+  insights(H,S,total);
+  var svg=document.getElementById('pieSvg'),lg=document.getElementById('legend'),s='',l='',off=25;
+  if(!total){svg.innerHTML='<circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--line)" stroke-width="7"/>';lg.innerHTML='<div class="empty">Tick a task to see your split here.</div>'}
+  else{
+    counts.sort(function(a,b){return b.n-a.n});
+    counts.forEach(function(o){var p=o.n/total*100,c=COLORS[o.r%COLORS.length];
+      s+='<circle cx="21" cy="21" r="15.9155" fill="none" stroke="'+c+'" stroke-width="7" stroke-dasharray="'+p+' '+(100-p)+'" stroke-dashoffset="'+off+'"/>';off-=p;
+      l+='<div><i style="background:'+c+'"></i><span>'+esc(state.names[o.r]||('Task '+(o.r+1)))+'</span><b>'+Math.round(p)+'%</b></div>'});
+    svg.innerHTML=s+'<text x="21" y="20" text-anchor="middle" font-size="6" font-weight="600" fill="var(--ink)">'+total+'</text><text x="21" y="26" text-anchor="middle" font-size="3" fill="var(--muted)">ticks</text>';
+    lg.innerHTML=l;
+  }
+  var w=document.getElementById('warns'),h='';
+  if(now.getFullYear()==cur.getFullYear()&&now.getMonth()==cur.getMonth()){
+    var td=now.getDate(),list=[];
+    for(r=0;r<ROWS;r++){if(!state.names[r])continue;var last=0;for(d=1;d<=td;d++)if(state.ticks[r+'-'+d])last=d;
+      var gap=td-last;if(gap>=2)list.push({r:r,gap:gap,never:!last})}
+    list.sort(function(a,b){return b.gap-a.gap});
+    list.slice(0,6).forEach(function(o){var nm=esc(state.names[o.r]);
+      h+='<div class="warn'+(o.gap>=4?' hot':'')+'"><span>'+(o.gap>=4?'🔥':'⚠️')+'</span><span>'+(o.never?'You have not done <b>'+nm+'</b> yet this month ('+o.gap+' days).':'You have not done <b>'+nm+'</b> for '+o.gap+' days.')+'</span></div>'});
+    if(list.length>6)h+='<div class="warn"><span>⚠️</span><span>And '+(list.length-6)+' more tasks are waiting.</span></div>';
+    if(!list.length&&counts.length)h='<div class="warn ok"><span>🌟</span><span>Nice! No task has been missed for 2 days.</span></div>';
+  }
+  w.innerHTML=h;
+}
+document.getElementById('t').addEventListener('click',function(e){
+  var b=e.target.closest('.cell');if(!b)return;
+  var k=b.dataset.r+'-'+b.dataset.d;
+  if(state.ticks[k]){delete state.ticks[k];b.classList.remove('on')}else{state.ticks[k]=1;b.classList.add('on')}
+  b.setAttribute('aria-pressed',!!state.ticks[k]);save();stats();
+});
+document.getElementById('t').addEventListener('input',function(e){
+  if(e.target.classList.contains('name')){state.names[+e.target.dataset.r]=e.target.value;save();stats()}
+});
+document.getElementById('prev').onclick=function(){cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);load();render()};
+document.getElementById('next').onclick=function(){cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);load();render()};
+document.getElementById('reset').onclick=function(){state.ticks={};save();render()};
+load();render();
+</script>
+</body>
+</html>
